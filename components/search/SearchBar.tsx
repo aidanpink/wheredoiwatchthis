@@ -38,14 +38,54 @@ export function SearchBar({ className }: SearchBarProps) {
   // Prevent scrolling when no title is selected
   useEffect(() => {
     if (selectedTitle || isLoadingTitle) {
+      // Allow scrolling when content is present
+      document.documentElement.style.position = "";
+      document.body.style.position = "";
+      document.documentElement.style.width = "";
+      document.body.style.width = "";
+      document.documentElement.style.height = "";
+      document.body.style.height = "";
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
+      document.documentElement.style.touchAction = "";
+      document.body.style.touchAction = "";
     } else {
+      // Prevent scrolling on both html and body, including when keyboard appears
+      // Use position: fixed to prevent mobile keyboard from enabling scroll
+      const scrollY = window.scrollY;
+      document.documentElement.style.position = "fixed";
+      document.body.style.position = "fixed";
+      document.documentElement.style.width = "100%";
+      document.body.style.width = "100%";
+      document.documentElement.style.height = "100%";
+      document.body.style.height = "100%";
+      document.documentElement.style.top = `-${scrollY}px`;
+      document.body.style.top = `-${scrollY}px`;
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
+      // Prevent touch scrolling on mobile
+      document.documentElement.style.touchAction = "none";
+      document.body.style.touchAction = "none";
     }
     
     // Cleanup on unmount
     return () => {
+      const scrollY = document.body.style.top;
+      document.documentElement.style.position = "";
+      document.body.style.position = "";
+      document.documentElement.style.width = "";
+      document.body.style.width = "";
+      document.documentElement.style.height = "";
+      document.body.style.height = "";
+      document.documentElement.style.top = "";
+      document.body.style.top = "";
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
+      document.documentElement.style.touchAction = "";
+      document.body.style.touchAction = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
     };
   }, [selectedTitle, isLoadingTitle]);
 
