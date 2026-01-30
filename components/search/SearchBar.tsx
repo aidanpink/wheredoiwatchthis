@@ -302,6 +302,7 @@ export function SearchBar({ className }: SearchBarProps) {
           <PopoverContent
             className="w-[var(--radix-popover-trigger-width)] p-1 mt-2 rounded-2xl"
             align="start"
+            side="bottom"
             sideOffset={12}
             onOpenAutoFocus={(e) => e.preventDefault()}
             asChild
