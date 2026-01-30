@@ -39,7 +39,8 @@ export function SearchBar({ className }: SearchBarProps) {
 
   // Handle viewport resize (keyboard show/hide) to keep popover positioned correctly
   useEffect(() => {
-    if (!shouldShowPopover) return;
+    const shouldShow = isOpen && (results.length > 0 || isLoading || query.length >= 2 || !!error);
+    if (!shouldShow) return;
 
     const handleResize = () => {
       // Force popover to recalculate position after viewport changes
@@ -72,7 +73,7 @@ export function SearchBar({ className }: SearchBarProps) {
       }
       window.removeEventListener('resize', handleResize);
     };
-  }, [shouldShowPopover]);
+  }, [isOpen, results.length, isLoading, query.length, error]);
 
   // Prevent scrolling when no title is selected
   useEffect(() => {
