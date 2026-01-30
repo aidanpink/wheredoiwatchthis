@@ -16,8 +16,8 @@ export function TitleTiles({ titleData, type, id }: TitleTilesProps) {
 
   return (
     <div className="w-full space-y-3">
-      {/* Bento Box Grid - 2 columns, evenly distributed */}
-      <div className="grid grid-cols-2 gap-3 w-full">
+      {/* Bento Box Grid - 1 column on mobile, 2 columns on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
         {/* Left column */}
         <div className="space-y-3">
           <WhereToWatch watchAvailability={titleData.watchAvailability} />

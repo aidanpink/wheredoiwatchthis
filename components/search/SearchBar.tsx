@@ -35,6 +35,20 @@ export function SearchBar({ className }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Prevent scrolling when no title is selected
+  useEffect(() => {
+    if (selectedTitle || isLoadingTitle) {
+      document.body.style.overflow = "";
+    } else {
+      document.body.style.overflow = "hidden";
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedTitle, isLoadingTitle]);
+
   const search = useCallback(async (searchQuery: string) => {
     if (searchQuery.length < 2) {
       setResults([]);
