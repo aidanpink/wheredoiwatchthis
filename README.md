@@ -1,4 +1,4 @@
-# Where do I watch...
+# Where do I watch this
 
 A modern web application to search for movies and TV shows and discover where to stream, rent, or buy them across various platforms.
 
