@@ -64,6 +64,13 @@ export async function POST(request: NextRequest) {
     );
 
     if (!aiOverview) {
+      // Check if OpenAI API key is missing
+      if (!process.env.OPENAI_API_KEY) {
+        return NextResponse.json(
+          { error: "OpenAI API key is not configured. Please set OPENAI_API_KEY in your .env.local file." },
+          { status: 500 }
+        );
+      }
       return NextResponse.json(
         { error: "Failed to generate AI overview" },
         { status: 500 }
@@ -75,10 +82,25 @@ export async function POST(request: NextRequest) {
         "Cache-Control": "public, s-maxage=604800, stale-while-revalidate=86400",
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Overview API error:", error);
+    console.error("Error stack:", error?.stack);
+    console.error("Error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    
+    // Check for specific OpenAI errors
+    if (error?.response?.status) {
+      return NextResponse.json(
+        { 
+          error: `OpenAI API error: ${error.response.status} ${error.response.statusText}`,
+          details: error.message 
+        },
+        { status: 500 }
+      );
+    }
+    
+    const errorMessage = error?.message || "Failed to generate AI overview";
     return NextResponse.json(
-      { error: "Failed to generate AI overview" },
+      { error: errorMessage, details: error?.toString() },
       { status: 500 }
     );
   }

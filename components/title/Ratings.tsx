@@ -39,32 +39,65 @@ export function Ratings({
           </div>
         </div>
 
-        <Separator />
+        {imdb && (
+          <>
+            <Separator />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-zinc-400">IMDb</span>
+                <span className="text-sm font-medium text-zinc-300">
+                  {imdb}/10
+                </span>
+              </div>
+              <div className="w-full bg-zinc-800 rounded-full h-2">
+                <div
+                  className="bg-zinc-50 h-2 rounded-full transition-all"
+                  style={{ width: `${(parseFloat(imdb) / 10) * 100}%` }}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-400">IMDb</span>
-          <span className="text-sm font-medium text-zinc-300">
-            {imdb ? `${imdb}/10` : "Not available"}
-          </span>
-        </div>
+        {metacritic && (
+          <>
+            <Separator />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-zinc-400">Metacritic</span>
+                <span className="text-sm font-medium text-zinc-300">
+                  {metacritic}/100
+                </span>
+              </div>
+              <div className="w-full bg-zinc-800 rounded-full h-2">
+                <div
+                  className="bg-zinc-50 h-2 rounded-full transition-all"
+                  style={{ width: `${parseFloat(metacritic)}%` }}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
-        <Separator />
-
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-400">Metacritic</span>
-          <span className="text-sm font-medium text-zinc-300">
-            {metacritic ? `${metacritic}/100` : "Not available"}
-          </span>
-        </div>
-
-        <Separator />
-
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-400">Rotten Tomatoes</span>
-          <span className="text-sm font-medium text-zinc-300">
-            {rottenTomatoes ? `${rottenTomatoes}%` : "Not available"}
-          </span>
-        </div>
+        {rottenTomatoes && (
+          <>
+            <Separator />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-zinc-400">Rotten Tomatoes</span>
+                <span className="text-sm font-medium text-zinc-300">
+                  {rottenTomatoes}%
+                </span>
+              </div>
+              <div className="w-full bg-zinc-800 rounded-full h-2">
+                <div
+                  className="bg-zinc-50 h-2 rounded-full transition-all"
+                  style={{ width: `${parseFloat(rottenTomatoes)}%` }}
+                />
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );

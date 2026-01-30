@@ -28,21 +28,31 @@ class WatchmodeApiClient {
 
   private getApiKey(): string {
     if (!this.apiKey) {
+      console.error("WATCHMODE_API_KEY is not set in environment variables");
       throw new Error("WATCHMODE_API_KEY is not set");
     }
+    console.log("WATCHMODE_API_KEY is set (length:", this.apiKey.length, ")");
     return this.apiKey;
   }
 
   private async fetch<T>(endpoint: string): Promise<T> {
     const apiKey = this.getApiKey();
     const url = `${WATCHMODE_BASE_URL}${endpoint}${endpoint.includes("?") ? "&" : "?"}apiKey=${apiKey}`;
-    const response = await fetch(url);
     
-    if (!response.ok) {
-      throw new Error(`Watchmode API error: ${response.statusText}`);
+    try {
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Watchmode API error (${response.status}):`, errorText);
+        throw new Error(`Watchmode API error: ${response.statusText}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error("Watchmode fetch error:", error);
+      throw error;
     }
-    
-    return response.json();
   }
 
   /**
@@ -85,14 +95,49 @@ class WatchmodeApiClient {
 
   /**
    * Get title by IMDb ID
+   * Watchmode API: /title/{imdb_id}/sources/ returns an array of sources directly
    */
   async getTitleByImdbId(imdbId: string): Promise<WatchmodeTitle | null> {
     try {
-      // Watchmode supports IMDb ID lookup
-      const data = await this.fetch<{ title: WatchmodeTitle }>(
-        `/title/${imdbId}/sources/?source_types=sub,rent,buy`
+      // Watchmode API expects IMDb ID with 'tt' prefix
+      // First try to find the title by searching, then get sources
+      const searchData = await this.fetch<{ title_results: Array<{ id: number; name: string; imdb_id: string }> }>(
+        `/autocomplete-search/?search_value=${imdbId}&search_type=2`
       );
-      return data.title || null;
+      
+      if (searchData.title_results && searchData.title_results.length > 0) {
+        // Found a match, get sources by Watchmode title ID
+        const titleId = searchData.title_results[0].id;
+        const sources = await this.fetch<WatchmodeSource[]>(
+          `/title/${titleId}/sources/?source_types=sub,rent,buy`
+        );
+        
+        if (Array.isArray(sources) && sources.length > 0) {
+          return {
+            title: searchData.title_results[0].name,
+            sources: sources,
+          };
+        }
+      }
+      
+      // If search didn't work, try direct IMDb ID lookup (some titles might work this way)
+      try {
+        const sources = await this.fetch<WatchmodeSource[]>(
+          `/title/${imdbId}/sources/?source_types=sub,rent,buy`
+        );
+        
+        if (Array.isArray(sources) && sources.length > 0) {
+          return {
+            title: "",
+            sources: sources,
+          };
+        }
+      } catch (directError) {
+        // Direct lookup failed, that's okay
+        console.log("Direct IMDb ID lookup failed, tried search method");
+      }
+      
+      return null;
     } catch (error) {
       console.error("Watchmode getTitleByImdbId error:", error);
       return null;

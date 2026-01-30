@@ -114,12 +114,63 @@ class TMDBApiClient {
 
   /**
    * Search for movies and TV shows
+   * Uses separate movie and TV search endpoints for better relevance
    */
   async search(query: string): Promise<TMDBSearchResult[]> {
-    const data = await this.fetch<{ results: TMDBSearchResult[] }>(
-      `/search/multi?query=${encodeURIComponent(query)}&include_adult=false`
-    );
-    return data.results.slice(0, 10);
+    // Normalize query - trim and handle special characters
+    const normalizedQuery = query.trim();
+    
+    // Search both movies and TV shows separately for better results
+    const [movieData, tvData] = await Promise.all([
+      this.fetch<{ results: TMDBSearchResult[] }>(
+        `/search/movie?query=${encodeURIComponent(normalizedQuery)}&include_adult=false`
+      ),
+      this.fetch<{ results: TMDBSearchResult[] }>(
+        `/search/tv?query=${encodeURIComponent(normalizedQuery)}&include_adult=false`
+      )
+    ]);
+
+    // Combine results, marking media type
+    const movieResults: TMDBSearchResult[] = movieData.results.map(result => ({
+      ...result,
+      media_type: "movie" as const,
+      title: result.title,
+    }));
+
+    const tvResults: TMDBSearchResult[] = tvData.results.map(result => ({
+      ...result,
+      media_type: "tv" as const,
+      name: result.name,
+    }));
+
+    // Combine results and prioritize exact/partial matches
+    const allResults = [...movieResults, ...tvResults];
+    
+    // Sort by relevance: exact title matches first, then partial matches
+    const queryLower = normalizedQuery.toLowerCase();
+    const sorted = allResults.sort((a, b) => {
+      const aTitle = (a.title || a.name || "").toLowerCase();
+      const bTitle = (b.title || b.name || "").toLowerCase();
+      
+      const aStarts = aTitle.startsWith(queryLower);
+      const bStarts = bTitle.startsWith(queryLower);
+      const aContains = aTitle.includes(queryLower);
+      const bContains = bTitle.includes(queryLower);
+      
+      // Prioritize titles that start with the query
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      
+      // Then prioritize titles that contain the query
+      if (aContains && !bContains) return -1;
+      if (!aContains && bContains) return 1;
+      
+      // Otherwise maintain TMDB's original order
+      return 0;
+    });
+    
+    // Return top 10 results
+    return sorted.slice(0, 10);
   }
 
   /**
@@ -138,6 +189,42 @@ class TMDBApiClient {
     return this.fetch<TMDBSeries>(
       `/tv/${id}?append_to_response=credits,videos,external_ids`
     );
+  }
+
+  /**
+   * Get watch providers for a movie
+   */
+  async getMovieWatchProviders(id: number): Promise<{
+    results: Record<string, {
+      link: string;
+      flatrate?: Array<{ logo_path: string; provider_id: number; provider_name: string }>;
+      rent?: Array<{ logo_path: string; provider_id: number; provider_name: string }>;
+      buy?: Array<{ logo_path: string; provider_id: number; provider_name: string }>;
+    }>;
+  }> {
+    return this.fetch(`/movie/${id}/watch/providers`);
+  }
+
+  /**
+   * Get watch providers for a TV show
+   */
+  async getTVWatchProviders(id: number): Promise<{
+    results: Record<string, {
+      link: string;
+      flatrate?: Array<{ logo_path: string; provider_id: number; provider_name: string }>;
+      rent?: Array<{ logo_path: string; provider_id: number; provider_name: string }>;
+      buy?: Array<{ logo_path: string; provider_id: number; provider_name: string }>;
+    }>;
+  }> {
+    return this.fetch(`/tv/${id}/watch/providers`);
+  }
+
+  /**
+   * Get provider logo URL
+   */
+  getProviderLogoUrl(logoPath: string | null, size: "w45" | "w92" | "w154" | "w185" | "w342" | "w500" = "w45"): string | null {
+    if (!logoPath) return null;
+    return `${TMDB_IMAGE_BASE}/${size}${logoPath}`;
   }
 
   /**

@@ -11,7 +11,7 @@ const Command = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "flex h-full w-full flex-col overflow-hidden rounded-md bg-zinc-900 text-zinc-50",
+      "flex h-full w-full flex-col overflow-hidden rounded-2xl bg-zinc-900 text-zinc-50",
       className
     )}
     {...props}
@@ -43,7 +43,7 @@ const CommandList = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)}
+    className={cn("max-h-[400px] overflow-y-auto overflow-x-hidden", className)}
     {...props}
   />
 ));
@@ -81,17 +81,29 @@ const CommandItem = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement> & {
     onSelect?: () => void;
   }
->(({ className, onSelect, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-zinc-800 aria-selected:text-zinc-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    )}
-    onSelect={onSelect}
-    {...props}
-  />
-));
+>(({ className, onSelect, onClick, ...props }, ref) => {
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (onSelect) {
+      onSelect();
+    }
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "relative flex cursor-pointer select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none aria-selected:bg-zinc-800 aria-selected:text-zinc-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 m-1",
+        "hover:bg-zinc-800 hover:rounded-xl transition-colors duration-200",
+        className
+      )}
+      onClick={handleClick}
+      {...props}
+    />
+  );
+});
 CommandItem.displayName = "CommandItem";
 
 export {

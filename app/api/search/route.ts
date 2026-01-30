@@ -24,7 +24,12 @@ export async function GET(request: NextRequest) {
 
     const results = await tmdb.search(query);
 
-    const searchResults: SearchResult[] = results.map((result) => {
+    // Filter out person results and only keep movie/tv
+    const filteredResults = results.filter(
+      (result) => result.media_type === "movie" || result.media_type === "tv"
+    );
+
+    const searchResults: SearchResult[] = filteredResults.map((result) => {
       const title = result.media_type === "movie" ? result.title : result.name;
       const releaseDate =
         result.media_type === "movie"
@@ -47,8 +52,18 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Search API error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    
+    // Check if it's an API key error
+    if (errorMessage.includes("TMDB_API_KEY")) {
+      return NextResponse.json(
+        { error: "TMDB API key is not configured. Please set TMDB_API_KEY in your .env.local file." },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: "Failed to search titles" },
+      { error: `Failed to search titles: ${errorMessage}` },
       { status: 500 }
     );
   }

@@ -50,13 +50,12 @@ export function Trailer({ trailerKey }: TrailerProps) {
         ) : (
           <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-zinc-800">
             <div className="absolute inset-0 flex items-center justify-center">
-              <Button
+              <button
                 onClick={handlePlay}
-                size="lg"
-                className="rounded-full h-16 w-16"
+                className="rounded-full h-16 w-16 bg-zinc-700 hover:bg-zinc-600 text-white flex items-center justify-center transition-colors"
               >
                 <Play className="h-8 w-8 ml-1" />
-              </Button>
+              </button>
             </div>
           </div>
         )}

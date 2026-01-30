@@ -50,68 +50,64 @@ export function Details({
         <CardTitle>Details</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <span className="text-sm text-zinc-400">Release Date</span>
-          <p className="text-sm text-zinc-300 mt-1">{formatDate(releaseDate)}</p>
-        </div>
-
-        <Separator />
-
-        <div>
-          <span className="text-sm text-zinc-400">
-            {type === "movie" ? "Runtime" : "Seasons"}
-          </span>
-          <p className="text-sm text-zinc-300 mt-1">
-            {type === "movie"
-              ? formatRuntime(runtime)
-              : seasons
-              ? `${seasons} ${seasons === 1 ? "season" : "seasons"}`
-              : "Unknown"}
-          </p>
-        </div>
-
-        <Separator />
-
-        <div>
-          <span className="text-sm text-zinc-400">Genres</span>
-          <p className="text-sm text-zinc-300 mt-1">{genres.join(", ") || "Unknown"}</p>
-        </div>
-
-        <Separator />
-
-        {type === "movie" && directors.length > 0 && (
-          <>
-            <div>
-              <span className="text-sm text-zinc-400">Director{directors.length > 1 ? "s" : ""}</span>
-              <p className="text-sm text-zinc-300 mt-1">{directors.join(", ")}</p>
-            </div>
-            <Separator />
-          </>
-        )}
-
-        {type === "tv" && creators.length > 0 && (
-          <>
-            <div>
-              <span className="text-sm text-zinc-400">Creator{creators.length > 1 ? "s" : ""}</span>
-              <p className="text-sm text-zinc-300 mt-1">{creators.join(", ")}</p>
-            </div>
-            <Separator />
-          </>
-        )}
-
-        {cast.length > 0 && (
+        {/* 2x2 Grid for main details */}
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <span className="text-sm text-zinc-400">Cast</span>
-            <div className="mt-2 space-y-1">
-              {cast.slice(0, 10).map((actor, index) => (
-                <p key={index} className="text-sm text-zinc-300">
-                  <span className="font-medium">{actor.name}</span>{" "}
-                  <span className="text-zinc-400">as {actor.character}</span>
-                </p>
-              ))}
-            </div>
+            <span className="text-sm text-zinc-400">Release Date</span>
+            <p className="text-sm text-zinc-300 mt-1">{formatDate(releaseDate)}</p>
           </div>
-        )}
+
+          <div>
+            <span className="text-sm text-zinc-400">
+              {type === "movie" ? "Runtime" : "Seasons"}
+            </span>
+            <p className="text-sm text-zinc-300 mt-1">
+              {type === "movie"
+                ? formatRuntime(runtime)
+                : seasons
+                ? `${seasons} ${seasons === 1 ? "season" : "seasons"}`
+                : "Unknown"}
+            </p>
+          </div>
+
+          <div>
+            <span className="text-sm text-zinc-400">Genres</span>
+            <p className="text-sm text-zinc-300 mt-1">{genres.join(", ") || "Unknown"}</p>
+          </div>
+
+          <div>
+            {type === "movie" && directors.length > 0 ? (
+              <>
+                <span className="text-sm text-zinc-400">Director{directors.length > 1 ? "s" : ""}</span>
+                <p className="text-sm text-zinc-300 mt-1">{directors.join(", ")}</p>
+              </>
+            ) : type === "tv" && creators.length > 0 ? (
+              <>
+                <span className="text-sm text-zinc-400">Creator{creators.length > 1 ? "s" : ""}</span>
+                <p className="text-sm text-zinc-300 mt-1">{creators.join(", ")}</p>
+              </>
+            ) : (
+              <span className="text-sm text-zinc-400">—</span>
+            )}
+          </div>
+        </div>
+
+            {cast.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <span className="text-sm text-zinc-400">Cast</span>
+                  <div className="mt-2 space-y-1">
+                    {cast.slice(0, 3).map((actor, index) => (
+                      <p key={index} className="text-sm text-zinc-300">
+                        <span className="font-medium">{actor.name}</span>{" "}
+                        <span className="text-zinc-400">as {actor.character}</span>
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
       </CardContent>
     </Card>
   );

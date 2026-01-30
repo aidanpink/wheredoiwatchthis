@@ -28,6 +28,7 @@ class OpenAIApiClient {
     keywords?: string[]
   ): Promise<{ overviewText: string; similarTitles: string[] } | null> {
     if (!this.client) {
+      console.error("OpenAI client not initialized. OPENAI_API_KEY is not set.");
       return null;
     }
 
@@ -75,6 +76,9 @@ SIMILAR: [title1, title2, title3]`;
         ],
         temperature: 0.7,
         max_tokens: 300,
+      }).catch((error) => {
+        console.error("OpenAI API call failed:", error);
+        throw error;
       });
 
       const content = completion.choices[0]?.message?.content || "";
@@ -94,9 +98,15 @@ SIMILAR: [title1, title2, title3]`;
         overviewText,
         similarTitles,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("OpenAI API error:", error);
-      return null;
+      console.error("OpenAI error details:", {
+        message: error?.message,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        code: error?.code,
+      });
+      throw error; // Re-throw to let the route handler handle it
     }
   }
 }
