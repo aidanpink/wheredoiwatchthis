@@ -77,6 +77,8 @@ export function SearchBar({ className }: SearchBarProps) {
 
   // Prevent scrolling when no title is selected
   useEffect(() => {
+    let handleViewportResize: (() => void) | null = null;
+    
     if (selectedTitle || isLoadingTitle) {
       // Allow scrolling when content is present
       document.documentElement.style.position = "";
@@ -93,12 +95,20 @@ export function SearchBar({ className }: SearchBarProps) {
       // Prevent scrolling on both html and body, including when keyboard appears
       // Use position: fixed to prevent mobile keyboard from enabling scroll
       const scrollY = window.scrollY;
+      
+      const updateHeight = () => {
+        // Use visual viewport height if available (accounts for keyboard), otherwise use window height
+        const height = window.visualViewport?.height || window.innerHeight;
+        document.documentElement.style.height = `${height}px`;
+        document.body.style.height = `${height}px`;
+      };
+      
       document.documentElement.style.position = "fixed";
       document.body.style.position = "fixed";
       document.documentElement.style.width = "100%";
       document.body.style.width = "100%";
-      document.documentElement.style.height = "100%";
-      document.body.style.height = "100%";
+      // Set initial height
+      updateHeight();
       document.documentElement.style.top = `-${scrollY}px`;
       document.body.style.top = `-${scrollY}px`;
       document.documentElement.style.overflow = "hidden";
@@ -106,25 +116,51 @@ export function SearchBar({ className }: SearchBarProps) {
       // Prevent touch scrolling on mobile
       document.documentElement.style.touchAction = "none";
       document.body.style.touchAction = "none";
+
+      // Update height when viewport changes (keyboard show/hide)
+      handleViewportResize = () => {
+        updateHeight();
+      };
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', handleViewportResize);
+      }
+      window.addEventListener('resize', handleViewportResize);
     }
     
     // Cleanup on unmount
     return () => {
-      const scrollY = document.body.style.top;
-      document.documentElement.style.position = "";
-      document.body.style.position = "";
-      document.documentElement.style.width = "";
-      document.body.style.width = "";
-      document.documentElement.style.height = "";
-      document.body.style.height = "";
-      document.documentElement.style.top = "";
-      document.body.style.top = "";
-      document.documentElement.style.overflow = "";
-      document.body.style.overflow = "";
-      document.documentElement.style.touchAction = "";
-      document.body.style.touchAction = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      // Remove viewport resize listeners
+      if (handleViewportResize) {
+        if (window.visualViewport) {
+          window.visualViewport.removeEventListener('resize', handleViewportResize);
+        }
+        window.removeEventListener('resize', handleViewportResize);
+      }
+      
+      // Only cleanup styles if we're still in the scroll-locked state
+      if (!selectedTitle && !isLoadingTitle) {
+        const scrollY = document.body.style.top;
+        // Reset all styles
+        document.documentElement.style.position = "";
+        document.documentElement.style.width = "";
+        document.documentElement.style.height = "";
+        document.documentElement.style.top = "";
+        document.documentElement.style.overflow = "";
+        document.documentElement.style.touchAction = "";
+        document.body.style.position = "";
+        document.body.style.width = "";
+        document.body.style.height = "";
+        document.body.style.top = "";
+        document.body.style.overflow = "";
+        document.body.style.touchAction = "";
+        // Restore scroll position
+        if (scrollY) {
+          const scrollValue = parseInt(scrollY.replace('px', '').replace('-', ''), 10) || 0;
+          requestAnimationFrame(() => {
+            window.scrollTo(0, scrollValue);
+          });
+        }
       }
     };
   }, [selectedTitle, isLoadingTitle]);
