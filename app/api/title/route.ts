@@ -223,16 +223,53 @@ export async function GET(request: NextRequest) {
             // Construct deepLink if not provided by Watchmode
             let deepLink = matchedWatchmodeSource?.web_url || null;
             
-            // Fallback: construct Apple TV+ link if available but no deepLink
-            if (!deepLink && providerNameLower.includes('apple tv') && tmdbProvider.type === "streaming") {
-              // Get title from tmdbData
+            // Fallback: construct deep links for common streaming services if not provided by Watchmode
+            if (!deepLink && tmdbProvider.type === "streaming") {
               const title = type === "movie" 
                 ? (tmdbData as Awaited<ReturnType<typeof tmdb.getMovie>>).title
                 : (tmdbData as Awaited<ReturnType<typeof tmdb.getTV>>).name;
-              // Apple TV+ search URL format
               const searchQuery = encodeURIComponent(title || "");
-              deepLink = `https://tv.apple.com/search?q=${searchQuery}`;
-              console.log(`[API] Constructed Apple TV+ fallback link for "${title}": ${deepLink}`);
+              
+              // Apple TV+
+              if (providerNameLower.includes('apple tv')) {
+                deepLink = `https://tv.apple.com/search?q=${searchQuery}`;
+                console.log(`[API] Constructed Apple TV+ fallback link for "${title}": ${deepLink}`);
+              }
+              // Disney+
+              else if (providerNameLower.includes('disney')) {
+                deepLink = `https://www.disneyplus.com/search?q=${searchQuery}`;
+                console.log(`[API] Constructed Disney+ fallback link for "${title}": ${deepLink}`);
+              }
+              // Netflix
+              else if (providerNameLower.includes('netflix')) {
+                deepLink = `https://www.netflix.com/search?q=${searchQuery}`;
+                console.log(`[API] Constructed Netflix fallback link for "${title}": ${deepLink}`);
+              }
+              // Hulu
+              else if (providerNameLower.includes('hulu')) {
+                deepLink = `https://www.hulu.com/search?q=${searchQuery}`;
+                console.log(`[API] Constructed Hulu fallback link for "${title}": ${deepLink}`);
+              }
+              // Max (HBO Max)
+              else if (providerNameLower.includes('max') || providerNameLower.includes('hbo max')) {
+                deepLink = `https://www.max.com/search?q=${searchQuery}`;
+                console.log(`[API] Constructed Max fallback link for "${title}": ${deepLink}`);
+              }
+              // Paramount+
+              else if (providerNameLower.includes('paramount')) {
+                deepLink = `https://www.paramountplus.com/search?q=${searchQuery}`;
+                console.log(`[API] Constructed Paramount+ fallback link for "${title}": ${deepLink}`);
+              }
+              // Peacock
+              else if (providerNameLower.includes('peacock')) {
+                deepLink = `https://www.peacocktv.com/search?q=${searchQuery}`;
+                console.log(`[API] Constructed Peacock fallback link for "${title}": ${deepLink}`);
+              }
+              // Prime Video
+              else if (providerNameLower.includes('prime video') || providerNameLower.includes('amazon prime')) {
+                deepLink = `https://www.amazon.com/s?k=${searchQuery}&i=prime-instant-video`;
+                console.log(`[API] Constructed Prime Video fallback link for "${title}": ${deepLink}`);
+              }
             }
             
             const option = {
@@ -260,19 +297,39 @@ export async function GET(request: NextRequest) {
         }
       } catch (error) {
         console.error("Watchmode API error:", error);
-        // If Watchmode fails, still use TMDB data but construct fallback links for Apple TV
+        // If Watchmode fails, still use TMDB data but construct fallback links for common services
         tmdbProviderMap.forEach((tmdbProvider, providerNameLower) => {
           let deepLink: string | null = null;
           
-          // Fallback: construct Apple TV+ link if available
-          const providerLower = providerNameLower.toLowerCase();
-          if (providerLower.includes('apple tv') && tmdbProvider.type === "streaming") {
+          // Fallback: construct deep links for common streaming services
+          if (tmdbProvider.type === "streaming") {
             const title = type === "movie" 
               ? (tmdbData as Awaited<ReturnType<typeof tmdb.getMovie>>).title
               : (tmdbData as Awaited<ReturnType<typeof tmdb.getTV>>).name;
             const searchQuery = encodeURIComponent(title || "");
-            deepLink = `https://tv.apple.com/search?q=${searchQuery}`;
-            console.log(`[API] Watchmode failed, constructed Apple TV+ fallback link for "${title}": ${deepLink}`);
+            const providerLower = providerNameLower.toLowerCase();
+            
+            if (providerLower.includes('apple tv')) {
+              deepLink = `https://tv.apple.com/search?q=${searchQuery}`;
+            } else if (providerLower.includes('disney')) {
+              deepLink = `https://www.disneyplus.com/search?q=${searchQuery}`;
+            } else if (providerLower.includes('netflix')) {
+              deepLink = `https://www.netflix.com/search?q=${searchQuery}`;
+            } else if (providerLower.includes('hulu')) {
+              deepLink = `https://www.hulu.com/search?q=${searchQuery}`;
+            } else if (providerLower.includes('max') || providerLower.includes('hbo max')) {
+              deepLink = `https://www.max.com/search?q=${searchQuery}`;
+            } else if (providerLower.includes('paramount')) {
+              deepLink = `https://www.paramountplus.com/search?q=${searchQuery}`;
+            } else if (providerLower.includes('peacock')) {
+              deepLink = `https://www.peacocktv.com/search?q=${searchQuery}`;
+            } else if (providerLower.includes('prime video') || providerLower.includes('amazon prime')) {
+              deepLink = `https://www.amazon.com/s?k=${searchQuery}&i=prime-instant-video`;
+            }
+            
+            if (deepLink) {
+              console.log(`[API] Watchmode failed, constructed fallback link for ${tmdbProvider.name} "${title}": ${deepLink}`);
+            }
           }
           
           const option = {
@@ -293,19 +350,39 @@ export async function GET(request: NextRequest) {
         });
       }
     } else if (tmdbProviderMap.size > 0) {
-      // No IMDb ID but we have TMDB data - use it directly with fallback links for Apple TV
+      // No IMDb ID but we have TMDB data - use it directly with fallback links for common services
       tmdbProviderMap.forEach((tmdbProvider, providerNameLower) => {
         let deepLink: string | null = null;
         
-        // Fallback: construct Apple TV+ link if available
-        const providerLower = providerNameLower.toLowerCase();
-        if (providerLower.includes('apple tv') && tmdbProvider.type === "streaming") {
+        // Fallback: construct deep links for common streaming services
+        if (tmdbProvider.type === "streaming") {
           const title = type === "movie" 
             ? (tmdbData as Awaited<ReturnType<typeof tmdb.getMovie>>).title
             : (tmdbData as Awaited<ReturnType<typeof tmdb.getTV>>).name;
           const searchQuery = encodeURIComponent(title || "");
-          deepLink = `https://tv.apple.com/search?q=${searchQuery}`;
-          console.log(`[API] No IMDb ID, constructed Apple TV+ fallback link for "${title}": ${deepLink}`);
+          const providerLower = providerNameLower.toLowerCase();
+          
+          if (providerLower.includes('apple tv')) {
+            deepLink = `https://tv.apple.com/search?q=${searchQuery}`;
+          } else if (providerLower.includes('disney')) {
+            deepLink = `https://www.disneyplus.com/search?q=${searchQuery}`;
+          } else if (providerLower.includes('netflix')) {
+            deepLink = `https://www.netflix.com/search?q=${searchQuery}`;
+          } else if (providerLower.includes('hulu')) {
+            deepLink = `https://www.hulu.com/search?q=${searchQuery}`;
+          } else if (providerLower.includes('max') || providerLower.includes('hbo max')) {
+            deepLink = `https://www.max.com/search?q=${searchQuery}`;
+          } else if (providerLower.includes('paramount')) {
+            deepLink = `https://www.paramountplus.com/search?q=${searchQuery}`;
+          } else if (providerLower.includes('peacock')) {
+            deepLink = `https://www.peacocktv.com/search?q=${searchQuery}`;
+          } else if (providerLower.includes('prime video') || providerLower.includes('amazon prime')) {
+            deepLink = `https://www.amazon.com/s?k=${searchQuery}&i=prime-instant-video`;
+          }
+          
+          if (deepLink) {
+            console.log(`[API] No IMDb ID, constructed fallback link for ${tmdbProvider.name} "${title}": ${deepLink}`);
+          }
         }
         
         const option = {
