@@ -6,6 +6,8 @@
 const OMDB_BASE_URL = "http://www.omdbapi.com";
 
 export interface OMDbResponse {
+  Response?: "True" | "False";
+  Error?: string;
   imdbRating?: string;
   Metascore?: string;
   Ratings?: Array<{
@@ -61,7 +63,7 @@ class OMDbApiClient {
       
       // Check for OMDb error response
       if (data.Response === "False") {
-        console.error("OMDb API returned error:", (data as any).Error);
+        console.error("OMDb API returned error:", data.Error);
         return {
           imdb: null,
           metacritic: null,
