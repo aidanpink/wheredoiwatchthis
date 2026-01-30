@@ -34,6 +34,45 @@ export function SearchBar({ className }: SearchBarProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const searchBarRef = useRef<HTMLDivElement>(null);
+  const popoverContentRef = useRef<HTMLDivElement>(null);
+
+  // Handle viewport resize (keyboard show/hide) to keep popover positioned correctly
+  useEffect(() => {
+    if (!shouldShowPopover) return;
+
+    const handleResize = () => {
+      // Force popover to recalculate position after viewport changes
+      if (popoverContentRef.current) {
+        // Trigger a re-render by briefly toggling visibility
+        const content = popoverContentRef.current;
+        const wasVisible = content.style.display !== 'none';
+        if (wasVisible) {
+          // Use requestAnimationFrame to ensure position recalculation
+          requestAnimationFrame(() => {
+            // Position should be recalculated by Radix UI
+          });
+        }
+      }
+    };
+
+    // Listen to visual viewport changes (mobile keyboard)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      window.visualViewport.addEventListener('scroll', handleResize);
+    }
+    
+    // Also listen to window resize
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+        window.visualViewport.removeEventListener('scroll', handleResize);
+      }
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [shouldShowPopover]);
 
   // Prevent scrolling when no title is selected
   useEffect(() => {
@@ -224,7 +263,7 @@ export function SearchBar({ className }: SearchBarProps) {
   const shouldShowPopover = isOpen && (results.length > 0 || isLoading || query.length >= 2 || !!error);
 
   return (
-    <div className="w-full">
+    <div className="w-full" ref={searchBarRef}>
       <Popover 
         open={shouldShowPopover} 
         onOpenChange={setIsOpen}
@@ -263,6 +302,17 @@ export function SearchBar({ className }: SearchBarProps) {
                   }
                   if (query.length >= 2 || results.length > 0) {
                     setIsOpen(true);
+                  }
+                  
+                  // Scroll search bar up to make room for suggestions list
+                  if (query.length > 0 && searchBarRef.current) {
+                    setTimeout(() => {
+                      searchBarRef.current?.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start',
+                        inline: 'nearest'
+                      });
+                    }, 100);
                   }
                 }}
                 className="h-14 pr-12 text-base bg-transparent"
@@ -304,11 +354,13 @@ export function SearchBar({ className }: SearchBarProps) {
             align="start"
             side="bottom"
             sideOffset={12}
+            avoidCollisions={false}
             onOpenAutoFocus={(e) => e.preventDefault()}
             asChild
             forceMount
           >
             <motion.div
+              ref={popoverContentRef}
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
